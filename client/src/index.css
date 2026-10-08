@@ -1747,3 +1747,131 @@ textarea {
 @media (prefers-reduced-motion: reduce) {
   .splash-content, .splash-loader span { animation: none; }
 }
+
+/* =========================================================
+   HIGH-DENSITY SEAT MAP FIX
+   Seats scale with the available canvas and seat-column count
+   so dense layouts remain readable without overlapping.
+   ========================================================= */
+.unified-seat-map-canvas,
+.van-designer-canvas {
+  --seat-columns: 4;
+}
+
+.unified-seat-map-canvas .unified-seat,
+.van-designer-canvas .designer-seat {
+  width: min(58px, calc(45% / var(--seat-columns)));
+  height: auto;
+  aspect-ratio: 58 / 62;
+  max-width: 58px;
+  min-width: 24px;
+  min-height: 26px;
+  padding: 0;
+}
+
+.van-designer-canvas .designer-seat {
+  aspect-ratio: 64 / 70;
+}
+
+.unified-seat-map-canvas .unified-seat strong,
+.van-designer-canvas .designer-seat strong {
+  font-size: clamp(10px, 1.9vw, 18px);
+}
+
+.van-designer-canvas .designer-seat small {
+  font-size: clamp(5px, .75vw, 7px);
+}
+
+@media (max-width: 760px) {
+  .unified-seat-map-shell {
+    padding: 10px;
+  }
+
+  .unified-seat-map-canvas .unified-seat,
+  .van-designer-canvas .designer-seat {
+    width: min(50px, calc(45% / var(--seat-columns)));
+  }
+
+  .unified-seat-map-canvas .unified-seat strong,
+  .van-designer-canvas .designer-seat strong {
+    font-size: clamp(9px, 2.5vw, 15px);
+  }
+}
+
+@media (max-width: 480px) {
+  .unified-seat-map-canvas .unified-seat,
+  .van-designer-canvas .designer-seat {
+    width: min(44px, calc(45% / var(--seat-columns)));
+    min-width: 22px;
+    min-height: 24px;
+  }
+}
+
+/* Today's quick-booking panel */
+.today-trip-list {
+  display: grid;
+  gap: 12px;
+}
+
+.today-trip-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+}
+
+.today-trip-main {
+  min-width: 0;
+}
+
+.today-trip-main h3 {
+  margin: 4px 0 4px;
+  font-size: 18px;
+}
+
+.today-trip-main p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.today-trip-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+.today-trip-state {
+  padding: 20px;
+}
+
+.today-trip-state h3 {
+  margin-bottom: 4px;
+}
+
+.today-trip-state p {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+@media (max-width: 650px) {
+  .today-trip-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .today-trip-meta {
+    justify-content: space-between;
+  }
+
+  .today-trip-meta .primary-button,
+  .today-trip-meta .secondary-button {
+    flex: 1 1 auto;
+  }
+}
