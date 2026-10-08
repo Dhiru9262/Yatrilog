@@ -5,7 +5,7 @@ import api from "../../api/axios";
 const makeDefaultLayout = (count) => {
   // Use more columns for large vans so 40+ seats never collapse into
   // overlapping rows. The canvas height grows with the number of rows.
-  const columns = count <= 24 ? 4 : count <= 48 ? 5 : 6;
+  const columns = count <= 16 ? 4 : count <= 30 ? 5 : count <= 48 ? 6 : 7;
   const rows = Math.ceil(count / columns);
   const canvasHeight = Math.max(600, 150 + rows * 62);
   const left = 0.16;
@@ -183,8 +183,10 @@ const AdminSeatLayout = () => {
         <div
           ref={canvasRef}
           className="van-designer-canvas"
-          style={{ aspectRatio: `760 / ${layout.canvas?.height || 600}` }}
-          data-seat-count={seatCount}
+          style={{
+            aspectRatio: `760 / ${layout.canvas?.height || 600}`,
+            "--seat-columns": layout.columns || (seatCount <= 16 ? 4 : seatCount <= 30 ? 5 : seatCount <= 48 ? 6 : 7),
+          }}
           onPointerMove={moveSeat}
           onPointerUp={() => setDrag(null)}
           onPointerCancel={() => setDrag(null)}
