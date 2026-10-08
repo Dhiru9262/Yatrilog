@@ -1,12 +1,22 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../api/axios";
 
+const toDateKey = (value) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("en-CA");
+};
+
 const OwnerDashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const todayKey = toDateKey(new Date());
 
   useEffect(() => {
     const load = async () => {
@@ -22,8 +32,23 @@ const OwnerDashboard = () => {
     load();
   }, []);
 
-  const upcoming = trips.filter((trip) => ["DRAFT", "FARE_PENDING", "SCHEDULED"].includes(trip.status)).length;
+  const upcoming = trips.filter((trip) =>
+    ["DRAFT", "FARE_PENDING", "SCHEDULED"].includes(trip.status),
+  ).length;
+
   const farePending = trips.filter((trip) => trip.status === "FARE_PENDING").length;
+
+  const todaysTrips = trips.filter(
+    (trip) =>
+      toDateKey(trip.date) === todayKey &&
+      !["CANCELLED", "COMPLETED"].includes(String(trip.status).toUpperCase()),
+  );
+
+  const openBooking = (trip) => {
+    navigate(`/owner/trips/${trip._id || trip.id}/new-booking`, {
+      state: { trip },
+    });
+  };
 
   return (
     <main className="page-container owner-dashboard">
@@ -40,6 +65,54 @@ const OwnerDashboard = () => {
         <div className="stat-card"><span>MY TRIPS</span><strong>{loading ? "—" : trips.length}</strong><small>Trips linked to your vehicles</small></div>
         <div className="stat-card"><span>UPCOMING</span><strong>{loading ? "—" : upcoming}</strong><small>Scheduled or preparing</small></div>
         <div className="stat-card"><span>FARE PENDING</span><strong>{loading ? "—" : farePending}</strong><small>Trips needing fare setup</small></div>
+      </section>
+
+      <section className="section-block">
+        <div className="section-heading-row">
+          <div>
+            <p className="eyebrow">TODAY</p>
+            <h2>Today's Trips</h2>
+          </div>
+          <Link to="/owner/trips" className="text-link">View all →</Link>
+        </div>
+
+        {loading ? (
+          <div className="card today-trip-state">Loading today's trips...</div>
+        ) : todaysTrips.length === 0 ? (
+          <div className="card today-trip-state">
+            <h3>No trips scheduled for today</h3>
+            <p>Your active trips for today will appear here for quick ticket booking.</p>
+          </div>
+        ) : (
+          <div className="today-trip-list">
+            {todaysTrips.map((trip) => (
+              <article key={trip._id || trip.id} className="today-trip-card">
+                <div className="today-trip-main">
+                  <span className="trip-label">TODAY</span>
+                  <h3>{trip.route?.name || trip.routeName || "Unknown Route"}</h3>
+                  <p>{trip.departureTime || "—"} → {trip.arrivalTime || "—"} · {trip.vehicle?.vehicleNumber || "Vehicle not set"}</p>
+                </div>
+                <div className="today-trip-meta">
+                  <span className="trip-status">{trip.status}</span>
+                  {trip.status === "SCHEDULED" ? (
+                    <button type="button" className="primary-button" onClick={() => openBooking(trip)}>
+                      Book Ticket
+                    </button>
+                  ) : (
+                    <Link
+                      to={trip.status === "FARE_PENDING"
+                        ? `/owner/trips/${trip._id || trip.id}/fares`
+                        : "/owner/trips"}
+                      className="secondary-button"
+                    >
+                      {trip.status === "FARE_PENDING" ? "Set Fares" : "Open Trip"}
+                    </Link>
+                  )}
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="section-block">
