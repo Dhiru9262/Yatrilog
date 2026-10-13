@@ -172,6 +172,7 @@ const createOrder = async (req, res) => {
     // ==================================
 
     let totalAmount = 0;
+    const bookingSnapshot = [];
 
     for (const lock of locks) {
       const fromStop = trip.route.stops.find(
@@ -221,6 +222,10 @@ const createOrder = async (req, res) => {
       bookings: [],
 
       locks: locks.map((lock) => lock._id),
+
+      bookingSnapshot,
+
+      recoveryStatus: "PENDING",
 
       customer: req.user.id,
 
