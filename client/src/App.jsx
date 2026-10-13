@@ -41,6 +41,7 @@ import OwnerDashboard from "./pages/owner/OwnerDashboard";
 import OwnerTrips from "./pages/owner/OwnerTrips";
 import OwnerFareManagement from "./pages/owner/OwnerFareManagement";
 import OwnerVans from "./pages/owner/OwnerVans";
+import AddOwner from "./pages/owner/AddOwner";
 import Revenue from "./pages/Revenue";
 import BottomNavigation from "./components/BottomNavigation";
 import Signup from "./pages/auth/Signup";
@@ -77,7 +78,6 @@ const App = () => {
           {/* Authenticated */}
           <Route element={<ProtectedRoute />}>
             {/* Admin */}
-
             <Route element={<RoleRoute allowedRoles={["ADMIN"]} />}>
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/routes" element={<AdminRoutes />} />
@@ -88,58 +88,38 @@ const App = () => {
               <Route path="/admin/daily-bookings" element={<DailyBookings />} />
             </Route>
 
-            {/* owner  */}
-            {/* OWNER */}
+            {/* Owner */}
             <Route element={<RoleRoute allowedRoles={["OWNER"]} />}>
               <Route path="/owner" element={<OwnerDashboard />} />
+              <Route path="/owner/add-owner" element={<AddOwner />} />
               <Route path="/owner/trips" element={<OwnerTrips />} />
               <Route path="/owner/daily-bookings" element={<DailyBookings />} />
               <Route path="/owner/vans" element={<OwnerVans />} />
               <Route path="/owner/revenue" element={<Revenue />} />
               <Route path="/owner/trips/:tripId/new-booking" element={<NewBooking />} />
-
-              <Route
-                path="/owner/trips/:tripId/fares"
-                element={<OwnerFareManagement />}
-              />
+              <Route path="/owner/trips/:tripId/fares" element={<OwnerFareManagement />} />
             </Route>
 
-            {/* CUSTOMER */}
+            {/* Customer */}
             <Route element={<RoleRoute allowedRoles={["CUSTOMER"]} />}>
               <Route path="/customer" element={<CustomerDashboard />} />
               <Route path="/customer/search" element={<SearchTrips />} />
               <Route path="/customer/trips/:tripId" element={<TripDetails />} />
-              <Route
-                path="/customer/trips/:tripId/lock"
-                element={<SeatLock />}
-              />
-
+              <Route path="/customer/trips/:tripId/lock" element={<SeatLock />} />
               <Route path="/customer/payment/:tripId" element={<Payment />} />
-              <Route
-                path="/customer/booking-success/:bookingId"
-                element={<BookingSuccess />}
-              />
+              <Route path="/customer/booking-success/:bookingId" element={<BookingSuccess />} />
               <Route path="/customer/bookings" element={<MyBookings />} />
-              <Route
-                path="/customer/bookings/:bookingId"
-                element={<BookingDetails />}
-              />
+              <Route path="/customer/bookings/:bookingId" element={<BookingDetails />} />
             </Route>
 
-            {/* AGENT */}
+            {/* Agent */}
             <Route element={<RoleRoute allowedRoles={["AGENT"]} />}>
               <Route path="/agent" element={<AgentDashboard />} />
               <Route path="/agent/trips" element={<MyTrips />} />
               <Route path="/agent/daily-bookings" element={<DailyBookings />} />
               <Route path="/agent/revenue" element={<Revenue />} />
-              <Route
-                path="/agent/trips/:tripId/passengers"
-                element={<TripPassengers />}
-              />
-              <Route
-                path="/agent/trips/:tripId/new-booking"
-                element={<NewBooking />}
-              />
+              <Route path="/agent/trips/:tripId/passengers" element={<TripPassengers />} />
+              <Route path="/agent/trips/:tripId/new-booking" element={<NewBooking />} />
             </Route>
           </Route>
 
