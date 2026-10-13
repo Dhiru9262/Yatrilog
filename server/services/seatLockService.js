@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const SeatLock = require("../models/SeatLock");
 const Booking = require("../models/Booking");
 const { emitSeatUpdate } = require("../socket/seatSocket");
+const { touchSeatReservationGuard } = require("./seatReservationGuardService");
 // ======================================
 // SEGMENT OVERLAP
 // ======================================
@@ -33,6 +34,10 @@ const createSeatLock = async ({
     let createdLock;
 
     await session.withTransaction(async () => {
+      // Serialize all operations touching this trip/seat, including booking
+      // confirmation, so overlapping concurrent transactions cannot both pass.
+      await touchSeatReservationGuard({ tripId, seatNumber, session });
+
       // ----------------------------------
       // 1. Check existing bookings
       // ----------------------------------
