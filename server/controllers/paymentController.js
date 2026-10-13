@@ -202,6 +202,15 @@ const createOrder = async (req, res) => {
       }
 
       totalAmount += fare.amount;
+      bookingSnapshot.push({
+        trip: trip._id,
+        seatNumber: String(lock.seatNumber),
+        boardingStop: fromStop._id,
+        droppingStop: toStop._id,
+        boardingSequence: lock.boardingSequence,
+        droppingSequence: lock.droppingSequence,
+        fare: fare.amount,
+      });
     }
 
     // ==================================
