@@ -872,7 +872,10 @@ const cancelBooking = async (req, res) => {
       {
         _id: payment._id,
         status: "PAID",
-        refundStatus: "NONE",
+        $or: [
+          { refundStatus: "NONE" },
+          { refundStatus: { $exists: false } },
+        ],
       },
       {
         $set: {
