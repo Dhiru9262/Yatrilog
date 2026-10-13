@@ -1,0 +1,337 @@
+/*
+ * Yatrilog shared design system
+ * Loaded after index.css so existing page styles keep their layout-specific
+ * behavior while spacing, controls, typography and surfaces stay consistent.
+ */
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --page-gutter: clamp(16px, 3vw, 32px);
+  --control-height: 44px;
+  --control-radius: 10px;
+  --surface-radius: 16px;
+  --surface-border: #e9e5df;
+  --surface-shadow: 0 2px 8px rgba(34, 28, 23, .04), 0 10px 28px rgba(34, 28, 23, .035);
+  --surface-shadow-hover: 0 5px 16px rgba(34, 28, 23, .07), 0 16px 36px rgba(34, 28, 23, .06);
+  --focus-ring: 0 0 0 3px rgba(255, 107, 26, .18);
+}
+
+html {
+  font-size: 16px;
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  line-height: 1.5;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+img, svg, video, canvas {
+  max-width: 100%;
+}
+
+img {
+  height: auto;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  line-height: 1.25;
+  text-wrap: pretty;
+}
+
+p, li, label, small {
+  overflow-wrap: anywhere;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+}
+
+button, a, input, select, textarea, [tabindex]:not([tabindex="-1"]) {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:where(button, a, input, select, textarea, [role="button"]):focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+}
+
+:where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea) {
+  min-width: 0;
+  border-radius: var(--control-radius);
+}
+
+:where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea):focus-visible {
+  border-color: var(--orange);
+  box-shadow: var(--focus-ring);
+}
+
+textarea {
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.page-container {
+  width: min(var(--content, 1180px), calc(100% - (var(--page-gutter) * 2)));
+  padding-top: clamp(24px, 3vw, 36px);
+  padding-bottom: clamp(72px, 8vw, 96px);
+}
+
+.page-heading {
+  margin-bottom: var(--space-8);
+}
+
+.page-heading h1,
+.admin-page-header h1,
+.designer-heading h1 {
+  letter-spacing: -.035em;
+  line-height: 1.12;
+}
+
+.page-heading > p:last-child,
+.page-description,
+.section-description {
+  line-height: 1.65;
+}
+
+.section-heading,
+.section-heading-row,
+.results-heading,
+.customer-section-heading {
+  gap: var(--space-4);
+}
+
+.section-heading h2,
+.section-heading-row h2 {
+  line-height: 1.25;
+}
+
+.card,
+.search-card,
+.trip-card,
+.booking-card,
+.ticket,
+.form-section,
+.today-trip-card,
+.unified-seat-map-shell,
+.seat-designer-card {
+  border-color: var(--surface-border);
+  border-radius: var(--surface-radius);
+}
+
+.card,
+.search-card,
+.trip-card,
+.booking-card,
+.ticket,
+.form-section,
+.today-trip-card {
+  box-shadow: var(--surface-shadow);
+}
+
+.card,
+.form-section {
+  padding: clamp(16px, 2.2vw, 24px);
+}
+
+.card:hover,
+.search-card:hover,
+.trip-card:hover,
+.booking-card:hover,
+.today-trip-card:hover {
+  box-shadow: var(--surface-shadow-hover);
+}
+
+:where(.form-grid, .form-row, .form-fields, .filters-row, .filter-row) {
+  gap: var(--space-4);
+}
+
+:where(.form-group, .form-field, .input-group, .auth-field) {
+  min-width: 0;
+  margin-bottom: var(--space-4);
+}
+
+:where(.form-group, .form-field, .input-group, .auth-field) > label,
+:where(.form-group, .form-field, .input-group, .auth-field) > .field-label {
+  display: block;
+  margin-bottom: var(--space-2);
+  line-height: 1.4;
+}
+
+:where(.primary-button, .secondary-button, .danger-button) {
+  min-height: var(--control-height);
+  border-radius: var(--control-radius);
+  padding-inline: 16px;
+  line-height: 1.25;
+  white-space: normal;
+  text-align: center;
+}
+
+:where(.primary-button, .secondary-button, .danger-button):active:not(:disabled) {
+  transform: translateY(0);
+}
+
+:where(.primary-button, .secondary-button, .danger-button):disabled {
+  box-shadow: none;
+}
+
+:where(.error-message, .success-message, .auth-error, .auth-success) {
+  line-height: 1.5;
+}
+
+:where(.table-scroll, .table-responsive, .data-table-container) {
+  border-radius: 12px;
+  overscroll-behavior-x: contain;
+}
+
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+th, td {
+  line-height: 1.45;
+}
+
+:where(.empty-state, .loading-state) {
+  line-height: 1.6;
+}
+
+:where(.empty-state h2, .empty-state h3, .today-trip-state h3) {
+  margin-bottom: var(--space-2);
+}
+
+:where(.empty-state p, .today-trip-state p) {
+  max-width: 56ch;
+  margin-inline: auto;
+}
+
+:where(.page-container, main, .dashboard-content, .admin-content) > * + * {
+  scroll-margin-top: 24px;
+}
+
+/* Role dashboards reserve one predictable gutter for the fixed sidebar. */
+@media (min-width: 1101px) {
+  body:has(.role-sidebar) .page-container {
+    width: min(1160px, calc(100% - 330px));
+    margin-left: 300px;
+    margin-right: 30px;
+  }
+}
+
+@media (max-width: 1100px) {
+  body:has(.role-sidebar) .page-container {
+    width: calc(100% - 300px);
+    margin-left: 280px;
+    margin-right: 20px;
+  }
+}
+
+@media (max-width: 760px) {
+  :root {
+    --page-gutter: 16px;
+  }
+
+  .page-container,
+  body:has(.role-sidebar) .page-container {
+    width: calc(100% - (var(--page-gutter) * 2)) !important;
+    margin-inline: auto !important;
+    padding-top: 22px;
+    padding-bottom: 104px;
+  }
+
+  .page-heading {
+    margin-bottom: var(--space-6);
+  }
+
+  .section-heading,
+  .section-heading-row,
+  .results-heading,
+  .customer-section-heading,
+  .admin-page-header,
+  .owner-trip-header {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+
+  .section-heading > *,
+  .section-heading-row > * {
+    min-width: 0;
+  }
+
+  .card,
+  .form-section {
+    padding: 16px;
+  }
+
+  :where(.form-actions, .booking-card-footer, .success-actions) {
+    gap: var(--space-2);
+  }
+
+  :where(.form-actions, .booking-card-footer, .success-actions) > * {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --page-gutter: 12px;
+  }
+
+  .page-container,
+  body:has(.role-sidebar) .page-container {
+    width: calc(100% - (var(--page-gutter) * 2)) !important;
+    padding-top: 18px;
+  }
+
+  .card,
+  .search-card,
+  .trip-card,
+  .booking-card,
+  .ticket,
+  .form-section,
+  .unified-seat-map-shell,
+  .seat-designer-card {
+    border-radius: 12px;
+  }
+
+  .card,
+  .form-section {
+    padding: 14px;
+  }
+
+  :where(.primary-button, .secondary-button, .danger-button) {
+    min-height: 44px;
+    padding-inline: 12px;
+  }
+
+  :where(.form-actions, .booking-card-footer, .success-actions) {
+    flex-wrap: wrap;
+  }
+
+  :where(.form-actions, .booking-card-footer, .success-actions) > * {
+    flex: 1 1 140px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
