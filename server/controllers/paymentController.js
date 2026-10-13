@@ -640,6 +640,8 @@ const verifyPayment = async (req, res) => {
         paymentInTransaction.razorpaySignature = razorpaySignature;
 
         paymentInTransaction.status = "PAID";
+        paymentInTransaction.recoveryStatus = "RECOVERED";
+        paymentInTransaction.recoveryError = null;
 
         await paymentInTransaction.save({
           session,
