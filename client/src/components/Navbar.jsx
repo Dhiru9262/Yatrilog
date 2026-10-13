@@ -42,6 +42,7 @@ const Navbar = () => {
     OWNER: [
       ["/owner", "Dashboard", "⌂"],
       ["/owner/trips", "My Trips", "▣"],
+      ["/owner/add-owner", "Add Owner", "+"],
       ["/owner/daily-bookings", "Daily Bookings", "▤"],
       ["/owner/vans", "All Vans", "🚌"],
       ["/owner/revenue", "Revenue", "₹"],
@@ -83,7 +84,7 @@ const Navbar = () => {
                 <span>{icon}</span>{label}
               </NavLink>
             ))}
-            {role === "OWNER" && <p className="sidebar-note">Set segment fares from a trip's fare management screen.</p>}
+            {role === "OWNER" && <p className="sidebar-note">Use Add Owner to create a separate owner login.</p>}
           </nav>
 
           <button className="sidebar-logout" type="button" onClick={logout}>↪ <span>Logout</span></button>
@@ -139,7 +140,7 @@ const Navbar = () => {
         <div className="mobile-header-actions">
           <LanguageToggle compact />
           <NotificationBell />
-          <button type="button" className="mobile-menu-button" onClick={() => setMobileMenuOpen((v) => !v)} aria-label="Open menu">
+          <button className="mobile-menu-button" type="button" onClick={() => setMobileMenuOpen((v) => !v)} aria-label="Open menu">
             {mobileMenuOpen ? "✕" : "☰"}
           </button>
         </div>
