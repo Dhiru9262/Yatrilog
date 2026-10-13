@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import NotificationBell from "./NotificationBell";
 import BrandLogo from "./BrandLogo";
@@ -9,7 +9,6 @@ const navClass = ({ isActive }) => `nav-link ${isActive ? "active" : ""}`;
 
 const Navbar = () => {
   const { user, isAuthenticated, logout } = useAuth();
-  const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   if (!isAuthenticated) {
