@@ -107,6 +107,24 @@ const paymentSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+
+    // Claim a refund before calling the provider to prevent concurrent
+    // cancellation requests from issuing duplicate refund calls.
+    refundStatus: {
+      type: String,
+      enum: ["NONE", "PROCESSING", "SUCCEEDED", "REVIEW_REQUIRED"],
+      default: "NONE",
+    },
+
+    refundRequestedAt: {
+      type: Date,
+      default: null,
+    },
+
+    refundError: {
+      type: String,
+      default: null,
+    },
   },
   {
     timestamps: true,
