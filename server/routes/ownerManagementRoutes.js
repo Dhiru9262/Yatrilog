@@ -5,7 +5,7 @@ const allowRoles = require("../middleware/roleMiddleware");
 
 const router = express.Router();
 
-// Only an authenticated owner can create another owner account.
-router.post("/owners", protect, allowRoles("OWNER"), createOwnerAccount);
+// Only an authenticated admin can create owner accounts.
+router.post("/owners", protect, allowRoles("ADMIN"), createOwnerAccount);
 
 module.exports = router;
