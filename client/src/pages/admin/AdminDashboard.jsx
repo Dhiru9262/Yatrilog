@@ -65,6 +65,15 @@ const AdminDashboard = () => {
         </div>
 
         <div className="admin-grid">
+          <Link to="/admin/add-owner" className="admin-card">
+            <div className="admin-card-icon">+</div>
+            <div>
+              <h3>Add Owner</h3>
+              <p>Create a new owner account and login.</p>
+            </div>
+            <span>→</span>
+          </Link>
+
           {/* ROUTES */}
 
           <Link to="/admin/routes" className="admin-card">

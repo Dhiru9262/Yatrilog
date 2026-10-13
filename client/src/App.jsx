@@ -86,12 +86,12 @@ const App = () => {
               <Route path="/admin/drivers" element={<AdminDrivers />} />
               <Route path="/admin/trips" element={<AdminTrips />} />
               <Route path="/admin/daily-bookings" element={<DailyBookings />} />
+              <Route path="/admin/add-owner" element={<AddOwner />} />
             </Route>
 
             {/* Owner */}
             <Route element={<RoleRoute allowedRoles={["OWNER"]} />}>
               <Route path="/owner" element={<OwnerDashboard />} />
-              <Route path="/owner/add-owner" element={<AddOwner />} />
               <Route path="/owner/trips" element={<OwnerTrips />} />
               <Route path="/owner/daily-bookings" element={<DailyBookings />} />
               <Route path="/owner/vans" element={<OwnerVans />} />
