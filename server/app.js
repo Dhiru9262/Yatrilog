@@ -4,6 +4,7 @@ const express = require("express");
 const cors = require("cors");
 const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const ownerManagementRoutes = require("./routes/ownerManagementRoutes");
 const vehicleRoutes = require("./routes/vehicleRoutes");
 const routeRoutes = require("./routes/routeRoutes");
 const tripRoutes = require("./routes/tripRoutes");
@@ -93,6 +94,7 @@ app.use("/api", apiLimiter);
 // routes
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/owner-management", ownerManagementRoutes);
 app.use("/api/vehicles", vehicleRoutes);
 app.use("/api/vehicles", vehicleBookingRoutes);
 app.use("/api/routes", routeRoutes);
