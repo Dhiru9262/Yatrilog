@@ -1,7 +1,7 @@
 const express = require("express");
 
 const { createBooking } = require("../controllers/bookingController");
-const { cancelBooking } = require("../controllers/bookingController");
+const { cancelBooking } = require("../controllers/customerBookingController");
 
 const protect = require("../middleware/authMiddleware");
 const allowRoles = require("../middleware/roleMiddleware");

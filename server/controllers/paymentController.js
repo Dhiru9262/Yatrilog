@@ -14,7 +14,9 @@ const { createNotification } = require("../services/notificationService");
 const {
   createPaymentOrder,
   verifyPaymentSignature,
+  fetchRazorpayPayment,
 } = require("../services/paymentService");
+const { touchSeatReservationGuard } = require("../services/seatReservationGuardService");
 
 const generateBookingNumber = require("../utils/generateBookingNumber");
 
@@ -172,6 +174,7 @@ const createOrder = async (req, res) => {
     // ==================================
 
     let totalAmount = 0;
+    const bookingSnapshot = [];
 
     for (const lock of locks) {
       const fromStop = trip.route.stops.find(
@@ -199,6 +202,15 @@ const createOrder = async (req, res) => {
       }
 
       totalAmount += fare.amount;
+      bookingSnapshot.push({
+        trip: trip._id,
+        seatNumber: String(lock.seatNumber),
+        boardingStop: fromStop._id,
+        droppingStop: toStop._id,
+        boardingSequence: lock.boardingSequence,
+        droppingSequence: lock.droppingSequence,
+        fare: fare.amount,
+      });
     }
 
     // ==================================
@@ -221,6 +233,10 @@ const createOrder = async (req, res) => {
       bookings: [],
 
       locks: locks.map((lock) => lock._id),
+
+      bookingSnapshot,
+
+      recoveryStatus: "PENDING",
 
       customer: req.user.id,
 
@@ -515,6 +531,19 @@ const verifyPayment = async (req, res) => {
 
     try {
       await session.withTransaction(async () => {
+        // Serialize lock-to-booking transition against concurrent seat locks.
+        const guardKeys = [...new Map(
+          bookingData.map(({ lock }) => [
+            `${lock.trip.toString()}:${String(lock.seatNumber)}`,
+            { tripId: lock.trip, seatNumber: String(lock.seatNumber) },
+          ]),
+        ).values()].sort((a, b) =>
+          `${a.tripId}:${a.seatNumber}`.localeCompare(`${b.tripId}:${b.seatNumber}`),
+        );
+        for (const guard of guardKeys) {
+          await touchSeatReservationGuard({ ...guard, session });
+        }
+
         // ==============================
         // RELOAD PAYMENT
         // ==============================
@@ -620,6 +649,8 @@ const verifyPayment = async (req, res) => {
         paymentInTransaction.razorpaySignature = razorpaySignature;
 
         paymentInTransaction.status = "PAID";
+        paymentInTransaction.recoveryStatus = "RECOVERED";
+        paymentInTransaction.recoveryError = null;
 
         await paymentInTransaction.save({
           session,

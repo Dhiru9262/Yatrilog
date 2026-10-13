@@ -16,6 +16,31 @@ const paymentSchema = new mongoose.Schema(
       },
     ],
 
+    // Immutable server-calculated seat/fare details retained for recovery if
+    // Razorpay captures payment after temporary seat locks have expired.
+    bookingSnapshot: [
+      {
+        trip: { type: mongoose.Schema.Types.ObjectId, ref: "Trip", required: true },
+        seatNumber: { type: String, required: true },
+        boardingStop: { type: mongoose.Schema.Types.ObjectId, required: true },
+        droppingStop: { type: mongoose.Schema.Types.ObjectId, required: true },
+        boardingSequence: { type: Number, required: true },
+        droppingSequence: { type: Number, required: true },
+        fare: { type: Number, required: true, min: 0 },
+      },
+    ],
+
+    recoveryStatus: {
+      type: String,
+      enum: ["NOT_REQUIRED", "PENDING", "RECOVERED", "REFUND_REQUIRED"],
+      default: "NOT_REQUIRED",
+    },
+
+    recoveryError: {
+      type: String,
+      default: null,
+    },
+
     customer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -80,6 +105,24 @@ const paymentSchema = new mongoose.Schema(
 
     refundedAt: {
       type: Date,
+      default: null,
+    },
+
+    // Claim a refund before calling the provider to prevent concurrent
+    // cancellation requests from issuing duplicate refund calls.
+    refundStatus: {
+      type: String,
+      enum: ["NONE", "PROCESSING", "SUCCEEDED", "REVIEW_REQUIRED"],
+      default: "NONE",
+    },
+
+    refundRequestedAt: {
+      type: Date,
+      default: null,
+    },
+
+    refundError: {
+      type: String,
       default: null,
     },
   },

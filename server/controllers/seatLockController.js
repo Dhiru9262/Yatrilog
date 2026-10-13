@@ -1,8 +1,10 @@
+const mongoose = require("mongoose");
 const SeatLock = require("../models/SeatLock");
 const Trip = require("../models/Trip");
 const { emitSeatUpdate } = require("../socket/seatSocket");
 
 const { createSeatLock } = require("../services/seatLockService");
+const { touchSeatReservationGuard } = require("../services/seatReservationGuardService");
 
 // ======================================
 // LOCK SEAT
@@ -192,6 +194,15 @@ const lockSeat = async (req, res) => {
         });
       }
 
+      // A first-time concurrent guard upsert can race on its unique index.
+      // Treat that as a reservation conflict rather than a generic server error.
+      if (error.code === 11000 || error.codeName === "DuplicateKey") {
+        return res.status(409).json({
+          success: false,
+          message: "Another request is reserving this seat. Please retry.",
+        });
+      }
+
       throw error;
     }
 
@@ -272,48 +283,62 @@ const getMySeatLock = async (req, res) => {
 // ======================================
 
 const releaseSeatLock = async (req, res) => {
+  const session = await mongoose.startSession();
+  let releasedLock = null;
+
   try {
     const { lockId } = req.params;
 
-    const lock = await SeatLock.findOne({
-      _id: lockId,
-      customer: req.user.id,
+    await session.withTransaction(async () => {
+      const lock = await SeatLock.findOne({
+        _id: lockId,
+        customer: req.user.id,
+      }).session(session);
+
+      if (!lock) return;
+
+      // Serialize manual release against lock creation and payment confirmation.
+      await touchSeatReservationGuard({
+        tripId: lock.trip,
+        seatNumber: lock.seatNumber,
+        session,
+      });
+
+      const deleted = await SeatLock.deleteOne({
+        _id: lock._id,
+        customer: req.user.id,
+      }, { session });
+
+      if (deleted.deletedCount === 1) releasedLock = lock;
     });
 
-    if (!lock) {
+    if (!releasedLock) {
       return res.status(404).json({
         success: false,
         message: "Seat lock not found",
       });
     }
 
-    await SeatLock.deleteOne({
-      _id: lockId,
-    });
-
     emitSeatUpdate({
-      tripId: lock.trip,
-
-      seatNumber: lock.seatNumber,
-
+      tripId: releasedLock.trip,
+      seatNumber: releasedLock.seatNumber,
       status: "AVAILABLE",
-
-      boardingSequence: lock.boardingSequence,
-
-      droppingSequence: lock.droppingSequence,
+      boardingSequence: releasedLock.boardingSequence,
+      droppingSequence: releasedLock.droppingSequence,
     });
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Seat lock released",
     });
   } catch (error) {
     console.error("Release seat lock error:", error);
-
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Server error",
     });
+  } finally {
+    await session.endSession();
   }
 };
 
