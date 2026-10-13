@@ -14,7 +14,9 @@ const { createNotification } = require("../services/notificationService");
 const {
   createPaymentOrder,
   verifyPaymentSignature,
+  fetchRazorpayPayment,
 } = require("../services/paymentService");
+const { touchSeatReservationGuard } = require("../services/seatReservationGuardService");
 
 const generateBookingNumber = require("../utils/generateBookingNumber");
 
@@ -520,6 +522,19 @@ const verifyPayment = async (req, res) => {
 
     try {
       await session.withTransaction(async () => {
+        // Serialize lock-to-booking transition against concurrent seat locks.
+        const guardKeys = [...new Map(
+          bookingData.map(({ lock }) => [
+            `${lock.trip.toString()}:${String(lock.seatNumber)}`,
+            { tripId: lock.trip, seatNumber: String(lock.seatNumber) },
+          ]),
+        ).values()].sort((a, b) =>
+          `${a.tripId}:${a.seatNumber}`.localeCompare(`${b.tripId}:${b.seatNumber}`),
+        );
+        for (const guard of guardKeys) {
+          await touchSeatReservationGuard({ ...guard, session });
+        }
+
         // ==============================
         // RELOAD PAYMENT
         // ==============================
