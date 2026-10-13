@@ -1,198 +1,109 @@
 const crypto = require("crypto");
-
 const Payment = require("../models/Payment");
-const Booking = require("../models/Booking");
-
-// ======================================
-// VERIFY WEBHOOK SIGNATURE
-// ======================================
+const { recoverCapturedPayment } = require("../services/paymentBookingRecoveryService");
 
 const verifyWebhookSignature = (rawBody, receivedSignature) => {
-  const expectedSignature = crypto
+  if (!Buffer.isBuffer(rawBody) || !receivedSignature || !process.env.RAZORPAY_WEBHOOK_SECRET) {
+    return false;
+  }
+  const expected = crypto
     .createHmac("sha256", process.env.RAZORPAY_WEBHOOK_SECRET)
     .update(rawBody)
     .digest("hex");
-
-  const expectedBuffer = Buffer.from(expectedSignature, "utf8");
-
-  const receivedBuffer = Buffer.from(receivedSignature || "", "utf8");
-
-  if (expectedBuffer.length !== receivedBuffer.length) {
-    return false;
-  }
-
-  return crypto.timingSafeEqual(expectedBuffer, receivedBuffer);
+  const expectedBuffer = Buffer.from(expected, "utf8");
+  const receivedBuffer = Buffer.from(receivedSignature, "utf8");
+  return expectedBuffer.length === receivedBuffer.length &&
+    crypto.timingSafeEqual(expectedBuffer, receivedBuffer);
 };
-
-// ======================================
-// RAZORPAY WEBHOOK
-// ======================================
 
 const razorpayWebhook = async (req, res) => {
   try {
     const signature = req.headers["x-razorpay-signature"];
-    const webhookEventId = req.headers["x-razorpay-event-id"];
-
-    if (!signature) {
-      return res.status(400).json({
-        success: false,
-        message: "Webhook signature missing",
-      });
-    }
-
-    // req.body is a Buffer because
-    // express.raw() is used for this route.
+    const eventId = req.headers["x-razorpay-event-id"];
     const rawBody = req.body;
 
-    const isValid = verifyWebhookSignature(rawBody, signature);
-
-    if (!isValid) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid webhook signature",
-      });
+    if (!verifyWebhookSignature(rawBody, signature)) {
+      return res.status(400).json({ success: false, message: "Invalid webhook signature" });
     }
 
     const payload = JSON.parse(rawBody.toString("utf8"));
-
     const event = payload.event;
+    const paymentEntity = payload.payload?.payment?.entity;
 
-    if (!webhookEventId) {
-      console.warn("Razorpay webhook event ID missing");
+    if (!paymentEntity?.order_id) {
+      return res.status(200).json({ success: true, message: "No payment order to process" });
     }
 
-    console.log("Razorpay webhook:", event);
+    const payment = await Payment.findOne({ razorpayOrderId: paymentEntity.order_id });
 
-    // ==================================
-    // PAYMENT CAPTURED
-    // ==================================
+    if (!payment) {
+      // Razorpay retries only when a non-2xx response is returned. Keep this
+      // visible for reconciliation rather than retrying an unmatchable order forever.
+      console.error("Captured/failed Razorpay payment has no local order:", paymentEntity.order_id);
+      return res.status(200).json({ success: true, message: "Order not found locally; logged for reconciliation" });
+    }
+
+    if (eventId && payment.webhookEventId === eventId &&
+        (payment.recoveryStatus === "RECOVERED" || payment.recoveryStatus === "REFUND_REQUIRED")) {
+      return res.status(200).json({ success: true, message: "Webhook already handled" });
+    }
 
     if (event === "payment.captured") {
-      const paymentEntity = payload.payload?.payment?.entity;
+      const amountMatches = Number(paymentEntity.amount) === Math.round(Number(payment.amount) * 100);
+      const currencyMatches = String(paymentEntity.currency || "").toUpperCase() === String(payment.currency || "INR").toUpperCase();
 
-      if (!paymentEntity) {
-        return res.status(200).json({
-          success: true,
-        });
+      if (!amountMatches || !currencyMatches) {
+        payment.status = "PAID";
+        payment.razorpayPaymentId = paymentEntity.id;
+        payment.recoveryStatus = "REFUND_REQUIRED";
+        payment.recoveryError = !amountMatches
+          ? "Captured amount does not match the locally calculated order amount."
+          : "Captured currency does not match the local payment currency.";
+        if (eventId) {
+          payment.webhookEventId = eventId;
+          payment.webhookProcessedAt = new Date();
+        }
+        await payment.save();
+        console.error("Razorpay capture requires reconciliation:", payment.razorpayOrderId, payment.recoveryError);
+        return res.status(200).json({ success: true, message: "Payment captured; reconciliation required" });
       }
 
-      const razorpayPaymentId = paymentEntity.id;
-
-      const razorpayOrderId = paymentEntity.order_id;
-
-      const payment = await Payment.findOne({
-        razorpayOrderId,
+      const recovered = await recoverCapturedPayment({
+        paymentId: payment._id,
+        razorpayPaymentId: paymentEntity.id,
+        webhookEventId: eventId,
       });
 
-      if (!payment) {
-        console.log("Payment record not found:", razorpayOrderId);
-
-        return res.status(200).json({
-          success: true,
-        });
+      if (recovered.status === "REFUND_REQUIRED") {
+        console.error("Captured payment could not safely recover ticket:", payment.razorpayOrderId);
       }
 
-      // ==================================
-      // WEBHOOK IDEMPOTENCY
-      // ==================================
-
-      if (webhookEventId && payment.webhookEventId === webhookEventId) {
-        console.log("Duplicate Razorpay webhook ignored:", webhookEventId);
-
-        return res.status(200).json({
-          success: true,
-          message: "Webhook already processed",
-        });
-      }
-      // ==================================
-      // IDEMPOTENCY
-      // ==================================
-      // If the payment is already PAID
-      // AND a booking already exists,
-      // do not process it again.
-
-      if (payment.status === "PAID" && payment.booking) {
-        return res.status(200).json({
-          success: true,
-        });
-      }
-
-      // Mark payment as paid
-      payment.status = "PAID";
-
-      payment.razorpayPaymentId = razorpayPaymentId;
-
-      if (webhookEventId) {
-        payment.webhookEventId = webhookEventId;
-        payment.webhookProcessedAt = new Date();
-      }
-
-      await payment.save();
-
-      // ==================================
-      // UPDATE EXISTING BOOKING
-      // ==================================
-
-      if (payment.booking) {
-        await Booking.findByIdAndUpdate(payment.booking, {
-          paymentStatus: "PAID",
-          status: "CONFIRMED",
-        });
-      }
+      return res.status(200).json({
+        success: true,
+        message: recovered.status === "RECOVERED"
+          ? "Captured payment processed"
+          : "Payment captured; manual refund/reconciliation required",
+      });
     }
 
-    // ==================================
-    // PAYMENT FAILED
-    // ==================================
-
     if (event === "payment.failed") {
-      const paymentEntity = payload.payload?.payment?.entity;
-
-      if (!paymentEntity) {
-        return res.status(200).json({
-          success: true,
-        });
-      }
-
-      const razorpayOrderId = paymentEntity.order_id;
-
-      const payment = await Payment.findOne({
-        razorpayOrderId,
-      });
-
-      if (!payment) {
-        return res.status(200).json({
-          success: true,
-        });
-      }
-
-      // Never overwrite a successful payment
-      // with a failed webhook.
-
+      // A delayed failure event must never overwrite a successful capture.
       if (payment.status !== "PAID") {
         payment.status = "FAILED";
-
+        if (eventId) {
+          payment.webhookEventId = eventId;
+          payment.webhookProcessedAt = new Date();
+        }
         await payment.save();
       }
     }
 
-    // ==================================
-    // WEBHOOK SUCCESS
-    // ==================================
-
-    return res.status(200).json({
-      success: true,
-    });
+    return res.status(200).json({ success: true });
   } catch (error) {
     console.error("Razorpay webhook error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Webhook processing failed",
-    });
+    // Non-2xx asks Razorpay to retry transient failures.
+    return res.status(500).json({ success: false, message: "Webhook processing failed" });
   }
 };
 
-module.exports = {
-  razorpayWebhook,
-};
+module.exports = { razorpayWebhook };
