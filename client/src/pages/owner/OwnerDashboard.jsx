@@ -118,6 +118,7 @@ const OwnerDashboard = () => {
       <section className="section-block">
         <div className="section-heading-row"><div><p className="eyebrow">OPERATIONS</p><h2>Owner workspace</h2></div><Link to="/owner/trips" className="text-link">View all →</Link></div>
         <div className="action-grid two-up">
+          <Link to="/owner/add-owner" className="feature-card accent-card"><span className="feature-icon">+</span><div><h3>Add Owner</h3><p>Create a separate login for another owner.</p></div><b>→</b></Link>
           <Link to="/owner/trips" className="feature-card"><span className="feature-icon">▣</span><div><h3>My Trips</h3><p>Review trips assigned to your vehicles.</p></div><b>→</b></Link>
           <Link to="/owner/daily-bookings" className="feature-card"><span className="feature-icon">▤</span><div><h3>Daily Bookings</h3><p>See every booking and passenger detail for a day.</p></div><b>→</b></Link>
           <Link to="/owner/vans" className="feature-card"><span className="feature-icon">🚌</span><div><h3>All Vans</h3><p>Open any van and view its bookings by date.</p></div><b>→</b></Link>
