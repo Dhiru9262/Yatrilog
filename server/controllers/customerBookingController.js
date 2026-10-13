@@ -863,32 +863,57 @@ const cancelBooking = async (req, res) => {
     }
 
     // ----------------------------------
-    // Razorpay refund
+    // Atomically claim this refund before calling Razorpay. A concurrent
+    // cancellation request must not create a second provider refund.
+    // Unknown provider/network outcomes require reconciliation, not retry.
     // ----------------------------------
+
+    const claimedPayment = await Payment.findOneAndUpdate(
+      {
+        _id: payment._id,
+        status: "PAID",
+        refundStatus: "NONE",
+      },
+      {
+        $set: {
+          refundStatus: "PROCESSING",
+          refundRequestedAt: new Date(),
+          refundError: null,
+        },
+      },
+      { new: true },
+    );
+
+    if (!claimedPayment) {
+      return res.status(409).json({
+        success: false,
+        message: "A refund is already processing or requires reconciliation.",
+      });
+    }
 
     let refund;
 
     try {
       refund = await createRefund({
-        razorpayPaymentId: payment.razorpayPaymentId,
-
+        razorpayPaymentId: claimedPayment.razorpayPaymentId,
         amount: refundAmount,
-
         receipt: booking.bookingNumber,
       });
     } catch (refundError) {
-      console.error("Razorpay refund error:", refundError);
+      console.error("Razorpay refund outcome requires reconciliation:", refundError);
+      await Payment.updateOne(
+        { _id: claimedPayment._id, refundStatus: "PROCESSING" },
+        {
+          $set: {
+            refundStatus: "REVIEW_REQUIRED",
+            refundError: refundError?.error?.description || refundError?.message || "Provider refund outcome is unknown",
+          },
+        },
+      );
 
       return res.status(502).json({
         success: false,
-
-        message:
-          "Refund could not be processed. Your ticket has not been cancelled.",
-
-        error:
-          refundError?.error?.description ||
-          refundError?.message ||
-          "Razorpay refund failed",
+        message: "Refund outcome could not be confirmed. The ticket was not marked cancelled; support must reconcile Razorpay before retrying.",
       });
     }
 
@@ -923,6 +948,8 @@ const cancelBooking = async (req, res) => {
     payment.refundedAmount = refundAmount;
 
     payment.refundedAt = cancelledAt;
+    payment.refundStatus = "SUCCEEDED";
+    payment.refundError = null;
 
     await payment.save();
 
