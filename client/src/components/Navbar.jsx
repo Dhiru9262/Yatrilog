@@ -41,7 +41,6 @@ const Navbar = () => {
     OWNER: [
       ["/owner", "Dashboard", "⌂"],
       ["/owner/trips", "My Trips", "▣"],
-      ["/owner/add-owner", "Add Owner", "+"],
       ["/owner/daily-bookings", "Daily Bookings", "▤"],
       ["/owner/vans", "All Vans", "🚌"],
       ["/owner/revenue", "Revenue", "₹"],
@@ -53,6 +52,7 @@ const Navbar = () => {
       ["/admin/drivers", "Drivers", "♙"],
       ["/admin/trips", "Trips", "◷"],
       ["/admin/daily-bookings", "Bookings", "▤"],
+      ["/admin/add-owner", "Add Owner", "+"],
     ],
   }[role] || [];
 
@@ -83,7 +83,6 @@ const Navbar = () => {
                 <span>{icon}</span>{label}
               </NavLink>
             ))}
-            {role === "OWNER" && <p className="sidebar-note">Use Add Owner to create a separate owner login.</p>}
           </nav>
 
           <button className="sidebar-logout" type="button" onClick={logout}>↪ <span>Logout</span></button>
