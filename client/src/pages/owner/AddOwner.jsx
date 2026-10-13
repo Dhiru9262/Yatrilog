@@ -55,9 +55,9 @@ const AddOwner = () => {
   return (
     <main className="page-container">
       <div className="page-heading">
-        <p className="eyebrow">OWNER PORTAL</p>
+        <p className="eyebrow">ADMIN PORTAL</p>
         <h1>Add a New Owner</h1>
-        <p>Create a separate owner login for another person who needs access to the owner workspace.</p>
+        <p>Create an owner account and provide access to the owner workspace.</p>
       </div>
 
       <section className="card" style={{ maxWidth: 760, margin: "0 auto", padding: "clamp(20px, 4vw, 36px)" }}>
@@ -66,7 +66,7 @@ const AddOwner = () => {
             <p className="eyebrow">OWNER DETAILS</p>
             <h2>New owner account</h2>
           </div>
-          <Link to="/owner" className="text-link">Back to dashboard</Link>
+          <Link to="/admin" className="text-link">Back to dashboard</Link>
         </div>
 
         {error && <div className="error-message" role="alert">{error}</div>}
