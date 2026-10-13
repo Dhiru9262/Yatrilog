@@ -41,6 +41,10 @@ const verifyPaymentSignature = ({ orderId, paymentId, receivedSignature }) => {
   return crypto.timingSafeEqual(expectedBuffer, receivedBuffer);
 };
 
+const fetchRazorpayPayment = async (paymentId) => {
+  return razorpay.payments.fetch(paymentId);
+};
+
 // refund
 const createRefund = async ({ razorpayPaymentId, amount, receipt }) => {
   const refund = await razorpay.payments.refund(razorpayPaymentId, {
@@ -57,5 +61,6 @@ const createRefund = async ({ razorpayPaymentId, amount, receipt }) => {
 module.exports = {
   createPaymentOrder,
   verifyPaymentSignature,
+  fetchRazorpayPayment,
   createRefund,
 };
