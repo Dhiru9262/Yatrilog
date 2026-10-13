@@ -6,6 +6,7 @@ const SeatLock = require("../models/SeatLock");
 const generateBookingNumber = require("../utils/generateBookingNumber");
 const { createNotification } = require("./notificationService");
 const { emitSeatUpdate } = require("../socket/seatSocket");
+const { touchSeatReservationGuard } = require("./seatReservationGuardService");
 
 const segmentsOverlap = (existingStart, existingEnd, requestedStart, requestedEnd) =>
   existingStart < requestedEnd && requestedStart < existingEnd;
@@ -67,6 +68,18 @@ const recoverCapturedPayment = async ({
 
       // Never confirm a paid ticket if another confirmed/pending booking or
       // another customer's live lock now occupies any requested route segment.
+      const guardKeys = [...new Map(
+        snapshot.map((item) => [
+          `${String(item.trip)}:${String(item.seatNumber)}`,
+          { tripId: item.trip, seatNumber: String(item.seatNumber) },
+        ]),
+      ).values()].sort((a, b) =>
+        `${a.tripId}:${a.seatNumber}`.localeCompare(`${b.tripId}:${b.seatNumber}`),
+      );
+      for (const guard of guardKeys) {
+        await touchSeatReservationGuard({ ...guard, session });
+      }
+
       for (const item of snapshot) {
         const existingBookings = await Booking.find({
           trip: item.trip,
