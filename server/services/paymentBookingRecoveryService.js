@@ -39,6 +39,8 @@ const recoverCapturedPayment = async ({
       }
 
       if (payment.bookings?.length) {
+        payment.recoveryStatus = "RECOVERED";
+        payment.recoveryError = null;
         result = {
           status: "RECOVERED",
           bookings: await Booking.find({ _id: { $in: payment.bookings } }).session(session),
