@@ -951,8 +951,8 @@ const cancelBooking = async (req, res) => {
     payment.refundedAmount = refundAmount;
 
     payment.refundedAt = cancelledAt;
-    payment.refundStatus = "SUCCEEDED";
-    payment.refundError = null;
+    payment.refundStatus = refund.status === "processed" ? "SUCCEEDED" : "PROCESSING";
+    payment.refundError = refund.status === "processed" ? null : `Razorpay refund status: ${refund.status || "pending"}`;
 
     await payment.save();
 
@@ -963,7 +963,9 @@ const cancelBooking = async (req, res) => {
     return res.status(200).json({
       success: true,
 
-      message: "Ticket cancelled and full refund processed",
+      message: refund.status === "processed"
+        ? "Ticket cancelled and refund processed"
+        : "Ticket cancelled; refund is still processing",
 
       refund: {
         id: refund.id,
